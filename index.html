@@ -1,0 +1,111 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>MDGROUPS QR Tool</title>
+  <style>
+    body { margin:0; padding:20px; font-family:Segoe UI,sans-serif;
+      background:#f0f0f0; color:#222;
+      transition:background 0.3s, color 0.3s;
+    }
+    body.dark { background:#121212; color:#eee; }
+    .container { max-width:600px; margin:auto; padding:20px;
+      background:#fff; border-radius:12px;
+      box-shadow:0 4px 20px rgba(0,0,0,0.1);
+      transition:background 0.3s, color 0.3s;
+    }
+    .dark .container { background:#1e1e1e; }
+    button,input { width:100%; padding:12px; margin-top:10px;
+      font-size:16px; border-radius:8px; border:1px solid #ccc;
+    }
+    button { background:#007bff; color:#fff; border:none;
+      cursor:pointer; margin-top:20px;
+    }
+    button:hover { background:#0056b3; }
+    #preview { text-align:center; margin-top:20px; display:none; }
+    canvas { border:3px solid #ccc; border-radius:10px; }
+    a { display:block; margin:10px auto; padding:10px;
+      color:#fff; text-align:center; border-radius:8px;
+      text-decoration:none; width:80%;
+    }
+    a.download { background:#28a745; }
+    a.whatsapp { background:#25D366; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button onclick="toggleDark()">🌙 Toggle Dark Mode</button>
+
+    <h2 style="text-align:center;">📷 Scan QR Code</h2>
+    <div id="reader" style="width:100%;"></div>
+    <p id="scanResult" style="text-align:center;font-weight:bold;"></p>
+
+    <hr/>
+
+    <h2 style="text-align:center;">🔲 Generate QR Code</h2>
+    <input type="text" id="qrText" placeholder="Enter text or URL"/>
+    <input type="file" id="logoInput" accept="image/*"/>
+    <button onclick="generateQR()">Generate QR Code</button>
+
+    <div id="preview">
+      <canvas id="qrcodeCanvas" width="300" height="300"></canvas>
+      <a id="downloadLink" class="download" download="qr-mdgroups.png">⬇ Download QR</a>
+      <a id="whatsappShare" class="whatsapp" target="_blank">📤 Share via WhatsApp</a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script>
+    function toggleDark(){
+      document.body.classList.toggle("dark");
+    }
+
+    const qrScanner = new Html5Qrcode("reader");
+    qrScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
+      decoded => {
+        document.getElementById("scanResult").innerText = "Scanned: " + decoded;
+        qrScanner.stop();
+      },
+      () => {}
+    );
+
+    function generateQR(){
+      const text = document.getElementById("qrText").value.trim();
+      if (!text) return alert("Please enter text or URL");
+      const canvas = document.getElementById("qrcodeCanvas");
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0,0,300,300);
+
+      QRCode.toCanvas(canvas, text, {
+        errorCorrectionLevel:'H', width:300, margin:1,
+        color:{ dark:"#000", light:"#fff" }
+      }, err => {
+        if (err) return alert("Error generating QR");
+        ctx.font="bold 16px Arial";
+        ctx.fillStyle="rgba(0,0,0,0.25)";
+        ctx.textAlign="center";
+        ctx.fillText("MDGROUPS", 150, 280);
+
+        const logoFile=document.getElementById("logoInput").files[0];
+        if (logoFile){
+          const img=new Image();
+          img.onload=()=>{
+            ctx.drawImage(img,120,120,60,60);
+            finalize();
+          };
+          img.src=URL.createObjectURL(logoFile);
+        } else finalize();
+
+        function finalize(){
+          document.getElementById("downloadLink").href=canvas.toDataURL("image/png");
+          document.getElementById("whatsappShare").href="https://wa.me/?text=My%20QR%20from%20MDGROUPS:%20"+encodeURIComponent(text);
+          document.getElementById("preview").style.display="block";
+        }
+      });
+    }
+  </script>
+</body>
+</html>
